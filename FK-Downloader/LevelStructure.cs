@@ -1,8 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace FK_Downloader
 {
@@ -10,15 +7,24 @@ namespace FK_Downloader
     {
         public string Name { get; private set; }
         public string Tag { get; private set; }
-        public string Fandom { get; private set; }
-        public List<KeyValuePair<string,string>> Quests;
 
-        public LevelStructure(string name, string tag, List<KeyValuePair<string, string>> quests)
+        public List<Quest> Quests;
+
+        public LevelStructure(string name, string tag)
         {
             Name = name;
             Tag = tag;
-            Quests = quests.Select(x => x).ToList();
+            Quests = new List<Quest>();
         }
 
+        public void AddQuest(Quest quest)
+        {
+            Quests.Add(quest);
+        }
+
+        public void AddQuestList(List<Quest> quests)
+        {
+            Quests = quests.Select(x => x).ToList();
+        }
     }
 }

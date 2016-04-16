@@ -51,9 +51,11 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="FandomStructure.cs" />
     <Compile Include="LevelStructure.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Quest.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
