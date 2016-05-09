@@ -29,7 +29,7 @@ namespace FK_Downloader
         }
 
         private void Init()
-        {            
+        {
             var firefoxProfile = new FirefoxProfile { EnableNativeEvents = false };
             Driver = new FirefoxDriver(firefoxProfile);
             FandomTree = new List<FandomStructure>();
@@ -105,7 +105,11 @@ namespace FK_Downloader
                             tmpPosts = GetPosts(Driver, url + "&" + Config.NextPage + skipPages);
                         }
                         quest.AddURLList(posts);
-                        if (!Directory.Exists(quest.Name)&&quest.PostURLs.Any()) Directory.CreateDirectory(quest.Name);
+                        if (!Directory.Exists(quest.Name) && quest.PostURLs.Any())
+                        {
+                            Directory.CreateDirectory(quest.Name);
+                            Directory.SetCurrentDirectory(quest.Name);
+                        }
 
                         foreach (var postUrL in quest.PostURLs)
                         {
@@ -115,12 +119,17 @@ namespace FK_Downloader
                             wait.IgnoreExceptionTypes(typeof(NoSuchElementException));
                             wait.Until(ExpectedConditions.ElementIsVisible(By.Id(Config.CommentBoxId)));
 
-                            var filename = Path.Combine(Directory.GetCurrentDirectory(), postUrL.Substring(postUrL.LastIndexOf('/')+1));
+                            var filename = Path.Combine(Directory.GetCurrentDirectory(), postUrL.Substring(postUrL.LastIndexOf('/') + 1));
                             using (StreamWriter rawHTML = new StreamWriter(filename))
                             {
                                 rawHTML.Write(Driver.PageSource);
                             }
-
+                        }
+                        //we won't need full URL anymore, so leaving just filenames
+                        quest.AddURLList(quest.PostURLs.Select(x => x.Substring(x.LastIndexOf('/') + 1)).ToList());
+                        if (quest.PostURLs.Any())
+                        {
+                            Directory.SetCurrentDirectory("..");
                         }
                     }
                     Directory.SetCurrentDirectory("..");
@@ -128,7 +137,7 @@ namespace FK_Downloader
                 Directory.SetCurrentDirectory("..");
             }
 
-            
+
         }
         private string TrimIllegalChars(string path)
         {
