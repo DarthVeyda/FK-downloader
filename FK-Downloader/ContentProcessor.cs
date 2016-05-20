@@ -55,12 +55,10 @@ namespace FK_Downloader
             {
                 Path.GetDirectoryName(file.FileName);
                 var postId = new Regex(@"(\d+)(?!.*\d)").Match(file.FileName).Value;
-                var tmp = new HtmlDocument();
-                tmp.Load(file.FileName, Encoding.UTF8);
-                var post = tmp.DocumentNode.SelectNodes(String.Format("//div[@id = 'post{0}']/*/*/div[@class='paragraph']/div", postId));
-
-
-                var comments = tmp.DocumentNode.SelectNodes("//div[starts-with(@class, 'singleComment')]");
+                var tmpHtml = new HtmlDocument();
+                tmpHtml.Load(file.FileName, Encoding.UTF8);
+                var post = tmpHtml.DocumentNode.SelectNodes(String.Format("//div[@id = 'post{0}']/*/*/div[@class='paragraph']/div", postId));
+                var comments = tmpHtml.DocumentNode.SelectNodes("//div[starts-with(@class, 'singleComment')]");
                 //var comments = tmp.DocumentNode.SelectNodes("//div[following-sibling::div[./div[@class='postContent']/div[@class='commentAuthor']/div[@class='avatar']/img[@alt!='fandom 50 Shades of Grey 2015']]]");
 
                 foreach (var node in comments)
@@ -73,18 +71,41 @@ namespace FK_Downloader
                         else break;
                     }
                 }
+
+                foreach (var node in post)
+                {
+                    foreach (var child in node.SelectNodes(".//a[contains(@name,'more')]") ?? Enumerable.Empty<HtmlNode>())
+                    {
+                        child.Remove();
+                    }
+                    
+                    foreach (var child in node.SelectNodes(".//textarea") ?? Enumerable.Empty<HtmlNode>())
+                    {
+                        child.Remove();
+                    }
+
+                }
                 Directory.SetCurrentDirectory(Config.SaveFolder);
                 
-                using (StreamWriter tmpDump = new StreamWriter(Path.Combine(Path.GetDirectoryName(file.FileName), string.Format("{0}.html", postId))))
+                using (StreamWriter storage = new StreamWriter(Path.Combine(Path.GetDirectoryName(file.FileName), string.Format("{0}.xml", postId))))
                 {
                     foreach (var node in post)
                     {
-                        tmpDump.WriteLine(node.InnerHtml);
+                        storage.WriteLine(node.InnerHtml);
 #if DEBUG
-                        tmpDump.WriteLine("<br/><br/>");
+                        storage.WriteLine("<br><br>");
 #endif
                     }
-
+                }
+                using (StreamWriter storage = new StreamWriter(Path.Combine(Path.GetDirectoryName(file.FileName), string.Format("{0}.txt", postId))))
+                {
+                    foreach (var node in post)
+                    {
+                        storage.WriteLine(node.InnerHtml.Replace("<br>","\n"));
+#if DEBUG
+                        storage.WriteLine();
+#endif
+                    }
                 }
             }
         }
