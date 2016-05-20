@@ -57,7 +57,7 @@ namespace FK_Downloader
                 var postId = new Regex(@"(\d+)(?!.*\d)").Match(file.FileName).Value;
                 var tmp = new HtmlDocument();
                 tmp.Load(file.FileName, Encoding.UTF8);
-                var post = tmp.DocumentNode.SelectNodes(String.Format("//div[@id = 'post{0}']//div[@class='postInner']", postId));
+                var post = tmp.DocumentNode.SelectNodes(String.Format("//div[@id = 'post{0}']/*/*/div[@class='paragraph']/div", postId));
 
 
                 var comments = tmp.DocumentNode.SelectNodes("//div[starts-with(@class, 'singleComment')]");
@@ -69,7 +69,7 @@ namespace FK_Downloader
                             "div[@class='postContent']/div[@class='commentAuthor']/div[@class='avatar']/img");
                     if (null != continuationInComments)
                     {
-                        if (continuationInComments.GetAttributeValue("alt", "") == file.Fandom) post.Add(node);
+                        if (continuationInComments.GetAttributeValue("alt", "") == file.Fandom) post.Add(node.SelectSingleNode("div[@class='postContent']/div/div/div/span"));
                         else break;
                     }
                 }
@@ -80,6 +80,9 @@ namespace FK_Downloader
                     foreach (var node in post)
                     {
                         tmpDump.WriteLine(node.InnerHtml);
+#if DEBUG
+                        tmpDump.WriteLine("<br/><br/>");
+#endif
                     }
 
                 }
