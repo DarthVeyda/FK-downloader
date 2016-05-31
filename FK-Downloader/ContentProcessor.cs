@@ -53,7 +53,6 @@ namespace FK_Downloader
         {
             foreach (var file in GetRawHTML())
             {
-                Path.GetDirectoryName(file.FileName);
                 var postId = new Regex(@"(\d+)(?!.*\d)").Match(file.FileName).Value;
                 var tmpHtml = new HtmlDocument();
                 tmpHtml.Load(file.FileName, Encoding.UTF8);
@@ -91,9 +90,16 @@ namespace FK_Downloader
                 {
                     foreach (var node in post)
                     {
-                        storage.WriteLine(node.InnerHtml);
+                        var innerText = new StringBuilder(node.InnerHtml).Replace("<br>", "\n\r").Replace("<b>Название", "**DIVIDER**|**HEADERSTART**<b>Название").Replace("<b>Цикл:</b>", "**DIVIDER**<b>Цикл:</b>");
+                        var r = new Regex(@"[\n\r].*<b>Для голосования\s*([^\n\r]*)");
+                        foreach (Match match in r.Matches(innerText.ToString()))
+                        {
+                            innerText.Replace(match.Value, match.Value + "**HEADEREND**");
+                        }
+                        
+                        storage.WriteLine(innerText);
 #if DEBUG
-                        storage.WriteLine("<br><br>");
+                        storage.WriteLine();
 #endif
                     }
                 }
@@ -101,7 +107,7 @@ namespace FK_Downloader
                 {
                     foreach (var node in post)
                     {
-                        storage.WriteLine(node.InnerHtml.Replace("<br>","\n"));
+                        storage.WriteLine(node.InnerText);
 #if DEBUG
                         storage.WriteLine();
 #endif
