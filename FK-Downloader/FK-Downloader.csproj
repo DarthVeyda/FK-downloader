@@ -70,6 +70,41 @@
     <None Include="App.config" />
     <None Include="packages.config" />
   </ItemGroup>
+  <ItemGroup>
+    <Content Include="sample data for debugging\fandom 50 Shades of Grey 2015\2 левел_ От G до PG-13\Арт_клип_коллаж\205182140.txt" />
+    <Content Include="sample data for debugging\fandom 50 Shades of Grey 2015\2 левел_ От G до PG-13\Арт_клип_коллаж\205182140.xml" />
+    <Content Include="sample data for debugging\fandom 50 Shades of Grey 2015\2 левел_ От G до PG-13\Арт_клип_коллаж\p205182140.htm" />
+    <Content Include="sample data for debugging\fandom 50 Shades of Grey 2015\2 левел_ От G до PG-13\Драбблы\205115179.txt" />
+    <Content Include="sample data for debugging\fandom 50 Shades of Grey 2015\2 левел_ От G до PG-13\Драбблы\205115179.xml" />
+    <Content Include="sample data for debugging\fandom 50 Shades of Grey 2015\2 левел_ От G до PG-13\Драбблы\p205115179.htm" />
+    <Content Include="sample data for debugging\fandom 50 Shades of Grey 2015\2 левел_ От G до PG-13\Миди\205381403.txt" />
+    <Content Include="sample data for debugging\fandom 50 Shades of Grey 2015\2 левел_ От G до PG-13\Миди\205381403.xml" />
+    <Content Include="sample data for debugging\fandom 50 Shades of Grey 2015\2 левел_ От G до PG-13\Миди\p205381403.htm" />
+    <Content Include="sample data for debugging\fandom 50 Shades of Grey 2015\2 левел_ От G до PG-13\Мини\205248095.txt" />
+    <Content Include="sample data for debugging\fandom 50 Shades of Grey 2015\2 левел_ От G до PG-13\Мини\205248095.xml" />
+    <Content Include="sample data for debugging\fandom 50 Shades of Grey 2015\2 левел_ От G до PG-13\Мини\205248138.txt" />
+    <Content Include="sample data for debugging\fandom 50 Shades of Grey 2015\2 левел_ От G до PG-13\Мини\205248138.xml" />
+    <Content Include="sample data for debugging\fandom 50 Shades of Grey 2015\2 левел_ От G до PG-13\Мини\p205248095.htm" />
+    <Content Include="sample data for debugging\fandom 50 Shades of Grey 2015\2 левел_ От G до PG-13\Мини\p205248138.htm" />
+    <Content Include="sample data for debugging\fandom 50 Shades of Grey 2015\3 левел_ ББ\Иллюстрации\205503126.txt" />
+    <Content Include="sample data for debugging\fandom 50 Shades of Grey 2015\3 левел_ ББ\Иллюстрации\205503126.xml" />
+    <Content Include="sample data for debugging\fandom 50 Shades of Grey 2015\3 левел_ ББ\Иллюстрации\p205503126.htm" />
+    <Content Include="sample data for debugging\fandom 50 Shades of Grey 2015\3 левел_ ББ\Макси\205503120.txt" />
+    <Content Include="sample data for debugging\fandom 50 Shades of Grey 2015\3 левел_ ББ\Макси\205503120.xml" />
+    <Content Include="sample data for debugging\fandom 50 Shades of Grey 2015\3 левел_ ББ\Макси\p205503120.htm" />
+    <Content Include="sample data for debugging\fandom 50 Shades of Grey 2015\4 левел_ От R и выше\Арт_клип_коллаж\205695219.txt" />
+    <Content Include="sample data for debugging\fandom 50 Shades of Grey 2015\4 левел_ От R и выше\Арт_клип_коллаж\205695219.xml" />
+    <Content Include="sample data for debugging\fandom 50 Shades of Grey 2015\4 левел_ От R и выше\Арт_клип_коллаж\p205695219.htm" />
+    <Content Include="sample data for debugging\fandom 50 Shades of Grey 2015\4 левел_ От R и выше\Драбблы\205623335.txt" />
+    <Content Include="sample data for debugging\fandom 50 Shades of Grey 2015\4 левел_ От R и выше\Драбблы\205623335.xml" />
+    <Content Include="sample data for debugging\fandom 50 Shades of Grey 2015\4 левел_ От R и выше\Драбблы\p205623335.htm" />
+    <Content Include="sample data for debugging\fandom 50 Shades of Grey 2015\4 левел_ От R и выше\Мини\205762886.txt" />
+    <Content Include="sample data for debugging\fandom 50 Shades of Grey 2015\4 левел_ От R и выше\Мини\205762886.xml" />
+    <Content Include="sample data for debugging\fandom 50 Shades of Grey 2015\4 левел_ От R и выше\Мини\p205762886.htm" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="sample data for debugging\fandom 50 Shades of Grey 2015\5 левел_ Спецквест\" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
