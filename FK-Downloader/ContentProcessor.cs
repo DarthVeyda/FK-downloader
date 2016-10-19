@@ -71,19 +71,31 @@ namespace FK_Downloader
                     }
                 }
 
+                //stripping the post of everything but the text/images accompanied by headers
                 foreach (var node in post)
                 {
+                    //revoving orphaned more tags (we've alreay expanded all mores during saving the whole page)
                     foreach (var child in node.SelectNodes(".//a[contains(@name,'more')]") ?? Enumerable.Empty<HtmlNode>())
                     {
                         child.Remove();
                     }
                     
+                    //removing html codes for fandom banners
                     foreach (var child in node.SelectNodes(".//textarea") ?? Enumerable.Empty<HtmlNode>())
                     {
                         child.Remove();
                     }
 
+                    //removing all nested divs/tables added for styling purposes 
+                    while (null != node.SelectSingleNode("//div|table"))
+                    {
+                        var child = node.SelectSingleNode("//div|table");
+                        child.InsertBefore(child, child.ParentNode);
+                        child.Remove();
+                    }
+
                 }
+
                 Directory.SetCurrentDirectory(Config.SaveFolder);
                 
                 using (StreamWriter storage = new StreamWriter(Path.Combine(Path.GetDirectoryName(file.FileName), string.Format("{0}.xml", postId))))
