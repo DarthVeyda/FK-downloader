@@ -85,15 +85,6 @@ namespace FK_Downloader
                     {
                         child.Remove();
                     }
-
-                    //removing all nested divs/tables added for styling purposes 
-                    while (null != node.SelectSingleNode("//div|table"))
-                    {
-                        var child = node.SelectSingleNode("//div|table");
-                        child.InsertBefore(child, child.ParentNode);
-                        child.Remove();
-                    }
-
                 }
 
                 Directory.SetCurrentDirectory(Config.SaveFolder);
@@ -102,7 +93,8 @@ namespace FK_Downloader
                 {
                     foreach (var node in post)
                     {
-                        var innerText = new StringBuilder(node.InnerHtml).Replace("<br>", "\n\r").Replace("<b>Название", "**DIVIDER**|**HEADERSTART**<b>Название").Replace("<b>Цикл:</b>", "**DIVIDER**<b>Цикл:</b>");
+                        var innerHtml = RemoveUnwantedHtmlTags(node.InnerHtml, new List<string>() { "div", "table" });
+                        var innerText = new StringBuilder(innerHtml).Replace("<br>", "\n\r").Replace("<b>Название", "**DIVIDER**|**HEADERSTART**<b>Название").Replace("<b>Цикл:</b>", "**DIVIDER**|**CYCLE**<b>Цикл:</b>");
                         var r = new Regex(@"[\n\r].*<b>Для голосования\s*([^\n\r]*)");
                         foreach (Match match in r.Matches(innerText.ToString()))
                         {
@@ -149,6 +141,59 @@ namespace FK_Downloader
 
             File.WriteAllLines(destinationPath, File.ReadAllLines(sourcePath)
                                                     .Where(line => previousLines.Add(line)));
+        }
+
+        // courtesy of SO: http://stackoverflow.com/questions/12787449/html-agility-pack-removing-unwanted-tags-without-removing-content
+        private string RemoveUnwantedHtmlTags(string html, List<string> unwantedTags)
+        {
+            if (String.IsNullOrEmpty(html))
+            {
+                return html;
+            }
+
+            var document = new HtmlDocument();
+            document.LoadHtml(html);
+
+            HtmlNodeCollection tryGetNodes = document.DocumentNode.SelectNodes("./*|./text()");
+
+            if (tryGetNodes == null || !tryGetNodes.Any())
+            {
+                return html;
+            }
+
+            var nodes = new Queue<HtmlNode>(tryGetNodes);
+
+            while (nodes.Count > 0)
+            {
+                var node = nodes.Dequeue();
+                var parentNode = node.ParentNode;
+
+                var childNodes = node.SelectNodes("./*|./text()");
+
+                if (childNodes != null)
+                {
+                    foreach (var child in childNodes)
+                    {
+                        nodes.Enqueue(child);
+                    }
+                }
+
+                if (unwantedTags.Any(tag => tag == node.Name))
+                {
+                    if (childNodes != null)
+                    {
+                        foreach (var child in childNodes)
+                        {
+                            parentNode.InsertBefore(child, node);
+                        }
+                    }
+
+                    parentNode.RemoveChild(node);
+
+                }
+            }
+
+            return document.DocumentNode.InnerHtml;
         }
     }
 
