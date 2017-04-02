@@ -85,6 +85,12 @@ namespace FK_Downloader
                     {
                         child.Remove();
                     }
+
+                    //removing span block - they can also contain banners
+                    foreach (var child in node.SelectNodes(".//span") ?? Enumerable.Empty<HtmlNode>())
+                    {
+                        child.Remove();
+                    }
                 }
 
                 Directory.SetCurrentDirectory(Config.SaveFolder);
@@ -100,18 +106,10 @@ namespace FK_Downloader
                         {
                             innerText.Replace(match.Value, match.Value + "**HEADEREND**");
                         }
-                        
+
+                        var entries = innerText.ToString().Split(new[] { "**DIVIDER**" }, StringSplitOptions.RemoveEmptyEntries);
+
                         storage.WriteLine(innerText);
-#if DEBUG
-                        storage.WriteLine();
-#endif
-                    }
-                }
-                using (StreamWriter storage = new StreamWriter(Path.Combine(Path.GetDirectoryName(file.FileName), string.Format("{0}.txt", postId))))
-                {
-                    foreach (var node in post)
-                    {
-                        storage.WriteLine(node.InnerText);
 #if DEBUG
                         storage.WriteLine();
 #endif
