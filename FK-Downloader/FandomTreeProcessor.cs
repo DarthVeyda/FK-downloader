@@ -31,7 +31,13 @@ namespace FK_Downloader
         private void Init()
         {
             var firefoxProfile = new FirefoxProfile { EnableNativeEvents = false };
-            Driver = new FirefoxDriver(firefoxProfile);
+            var driverService = FirefoxDriverService.CreateDefaultService();
+            driverService.FirefoxBinaryPath = @"C:\Program Files (x86)\Mozilla Firefox\firefox.exe";
+            driverService.HideCommandPromptWindow = true;
+            driverService.SuppressInitialDiagnosticInformation = true;
+
+            var driver = new FirefoxDriver(driverService, new FirefoxOptions() { Profile = firefoxProfile }, TimeSpan.FromSeconds(60));
+            Driver = driver; // new FirefoxDriver(firefoxProfile);
             FandomTree = new List<FandomStructure>();
         }
 
@@ -39,7 +45,9 @@ namespace FK_Downloader
         {
             Driver.Navigate().GoToUrl(new Uri(FKMasterURL + Config.Tags));
 
+            Driver.FindElement(By.Id("usrlog2")).Clear();
             Driver.FindElement(By.Id("usrlog2")).SendKeys(_login);
+            Driver.FindElement(By.Id("usrpass2")).Clear();
             Driver.FindElement(By.Id("usrpass2")).SendKeys(_password);
             Driver.FindElement(By.ClassName("submit")).Click();
         }
@@ -85,11 +93,11 @@ namespace FK_Downloader
             foreach (var fandom in FandomTree)
             {
                 if (!Directory.Exists(fandom.Name)) Directory.CreateDirectory(fandom.Name);
-                Directory.SetCurrentDirectory(fandom.Name);
+                Directory.SetCurrentDirectory(Path.Combine(Directory.GetCurrentDirectory(), fandom.Name));
                 foreach (var level in fandom.Levels)
                 {
                     if (!Directory.Exists(level.Name)) Directory.CreateDirectory(level.Name);
-                    Directory.SetCurrentDirectory(level.Name);
+                    Directory.SetCurrentDirectory(Path.Combine(Directory.GetCurrentDirectory(), level.Name));
 
                     foreach (var quest in level.Quests)
                     {
@@ -108,8 +116,10 @@ namespace FK_Downloader
                         if (!Directory.Exists(quest.Name) && quest.PostURLs.Any())
                         {
                             Directory.CreateDirectory(quest.Name);
-                            Directory.SetCurrentDirectory(quest.Name);
                         }
+
+                        if (quest.PostURLs.Any())
+                            Directory.SetCurrentDirectory(Path.Combine(Directory.GetCurrentDirectory(), quest.Name));
 
                         foreach (var postUrL in quest.PostURLs)
                         {
@@ -126,7 +136,7 @@ namespace FK_Downloader
                             }
                         }
                         //we won't need full URL anymore, so leaving just filenames
-                        quest.AddURLList(quest.PostURLs.Select(x => x.Substring(x.LastIndexOf('/') + 1)).ToList());
+                        quest.AddURLList(quest.PostURLs.Select(x => Path.Combine(Directory.GetCurrentDirectory(), x.Substring(x.LastIndexOf('/') + 1))).ToList());
                         if (quest.PostURLs.Any())
                         {
                             Directory.SetCurrentDirectory("..");
@@ -136,9 +146,13 @@ namespace FK_Downloader
                 }
                 Directory.SetCurrentDirectory("..");
             }
-
-
         }
+
+        public void Quit()
+        {
+            Driver.Close();
+        }
+
         private string TrimIllegalChars(string path)
         {
             return (new string(Path.GetInvalidFileNameChars()) + new string(Path.GetInvalidPathChars())).Aggregate(
@@ -147,6 +161,17 @@ namespace FK_Downloader
 
         private Dictionary<string, string> CreateTagList(IWebDriver driver, string searchText)
         {
+            //var collection = driver.FindElements(By.PartialLinkText(searchText));
+            //Dictionary<string, string> result = new Dictionary<string, string>();
+
+            //foreach (var el in driver.FindElements(By.PartialLinkText(searchText)))
+            //{
+            //    var levelName = TrimIllegalChars(el.GetAttribute("innerHTML"));
+            //    var levelURI = new Uri(el.GetAttribute("href")).Query.Replace("tag", "tag[]")
+            //                            .Replace("?", "");
+            //    result.Add(levelName, levelURI);
+            //}
+            //return result;
             return
                 driver.FindElements(By.PartialLinkText(searchText))
                     .Select(
@@ -158,7 +183,10 @@ namespace FK_Downloader
                                     new Uri(levelTag.GetAttribute("href")).Query.Replace("tag", "tag[]")
                                         .Replace("?", "")
                             })
-                    .OrderBy(x => x.levelName).ToDictionary(val => val.levelName, val => val.levelURI);
+                    .OrderBy(x => x.levelName)
+                    .GroupBy(x => new { levelName = x.levelName, levelURI = x.levelURI })
+                    .Select(x => new { levelName = x.Key.levelName, levelURI = x.Key.levelURI })
+                    .ToDictionary(val => val.levelName, val => val.levelURI);
         }
 
         private Dictionary<string, string> CreateTagList(IWebDriver driver, IEnumerable<string> searchTextVals)

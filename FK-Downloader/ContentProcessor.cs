@@ -100,7 +100,7 @@ namespace FK_Downloader
                     foreach (var node in post)
                     {
                         var innerHtml = RemoveUnwantedHtmlTags(node.InnerHtml, new List<string>() { "div", "table" });
-                        var innerText = new StringBuilder(innerHtml).Replace("<br>", "\n\r").Replace("<b>Название", "**DIVIDER**|**HEADERSTART**<b>Название").Replace("<b>Цикл:</b>", "**DIVIDER**|**CYCLE**<b>Цикл:</b>");
+                        var innerText = new StringBuilder(innerHtml).Replace("<br>", "\n\r").Replace("<b>Название", "**DIVIDER****HEADERSTART**<b>Название").Replace("<b>Цикл:</b>", "**DIVIDER****CYCLE**<b>Цикл:</b>");
                         var r = new Regex(@"[\n\r].*<b>Для голосования\s*([^\n\r]*)");
                         foreach (Match match in r.Matches(innerText.ToString()))
                         {
