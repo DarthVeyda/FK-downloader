@@ -1,8 +1,10 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using System.Diagnostics;
 
 namespace FK_Downloader
 {
+    [DebuggerDisplay("{Name} : {Tag}")]
     class LevelStructure
     {
         public string Name { get; private set; }
