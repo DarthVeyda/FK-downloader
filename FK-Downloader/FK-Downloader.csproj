@@ -61,6 +61,7 @@
   <ItemGroup>
     <Compile Include="Config.cs" />
     <Compile Include="ContentProcessor.cs" />
+    <Compile Include="Entry.cs" />
     <Compile Include="FandomStructure.cs" />
     <Compile Include="FandomTreeProcessor.cs">
       <SubType>Code</SubType>

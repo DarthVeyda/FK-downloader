@@ -12,9 +12,12 @@ namespace FK_Downloader
     {
         public List<FandomStructure> FandomTree { get; private set; }
 
+        public List<Entry> Entries { get; private set; }
+
         public ContentProcessor()
         {
             FandomTree = new List<FandomStructure>();
+            Entries = new List<Entry>();
         }
 
         public void AddFandomTree(List<FandomStructure> fandomTree)
@@ -24,6 +27,7 @@ namespace FK_Downloader
 
         public void InitFromDirectoryTree()
         {
+            FandomTree = new List<FandomStructure>();
             foreach (var dir in Directory.EnumerateDirectories(Config.SaveFolder))
             {
                 Directory.SetCurrentDirectory(dir);
@@ -35,7 +39,7 @@ namespace FK_Downloader
                     foreach (var dirQuest in Directory.EnumerateDirectories(dirLevel))
                     {
                         var tmpQuest = new Quest(Path.GetFileName(dirQuest), "");
-                        foreach (var file in Directory.EnumerateFiles(dirQuest,"*.htm"))
+                        foreach (var file in Directory.EnumerateFiles(dirQuest, "*.htm"))
                         {
                             tmpQuest.AddURL(file);
                         }
@@ -48,7 +52,7 @@ namespace FK_Downloader
                 Directory.SetCurrentDirectory("..");
             }
         }
-  
+
         public void ParseAll()
         {
             foreach (var file in GetRawHTML())
@@ -56,17 +60,23 @@ namespace FK_Downloader
                 var postId = new Regex(@"(\d+)(?!.*\d)").Match(file.FileName).Value;
                 var tmpHtml = new HtmlDocument();
                 tmpHtml.Load(file.FileName, Encoding.UTF8);
-                var post = tmpHtml.DocumentNode.SelectNodes(String.Format("//div[@id = 'post{0}']/*/*/div[@class='paragraph']/div", postId));
-                var comments = tmpHtml.DocumentNode.SelectNodes("//div[starts-with(@class, 'singleComment')]");
-                //var comments = tmp.DocumentNode.SelectNodes("//div[following-sibling::div[./div[@class='postContent']/div[@class='commentAuthor']/div[@class='avatar']/img[@alt!='fandom 50 Shades of Grey 2015']]]");
 
+                /* <div class="postContent"><div class="commentAuthor"><div class="avatar">
+                 * <img src="http://static.diary.ru/userdir/3/1/2/1/3121599/83144722.png" title="fandom Dragonriders of Pern 2017" alt="fandom Dragonriders of Pern 2017">
+                    */
+
+                var fandomCommunityName = tmpHtml.DocumentNode.SelectNodes(string.Format($"//div[@id = 'post{postId}']/div[@class='postContent']/div[@class='commentAuthor']/div[@class='avatar']/img")).FirstOrDefault().Attributes["alt"].Value;
+                var post = tmpHtml.DocumentNode.SelectNodes(string.Format($"//div[@id = 'post{postId}']/*/*/div[@class='paragraph']/div"));
+                var comments = tmpHtml.DocumentNode.SelectNodes("//div[starts-with(@class, 'singleComment')]");
+                
                 foreach (var node in comments)
                 {
                     var continuationInComments = node.SelectSingleNode(
                             "div[@class='postContent']/div[@class='commentAuthor']/div[@class='avatar']/img");
                     if (null != continuationInComments)
                     {
-                        if (continuationInComments.GetAttributeValue("alt", "") == file.Fandom) post.Add(node.SelectSingleNode("div[@class='postContent']/div/div/div/span"));
+                        if (continuationInComments.GetAttributeValue("alt", "") == fandomCommunityName)
+                            post.Last().AppendChild(node.SelectSingleNode("div[@class='postContent']/div/div/div/span"));
                         else break;
                     }
                 }
@@ -74,31 +84,43 @@ namespace FK_Downloader
                 //stripping the post of everything but the text/images accompanied by headers
                 foreach (var node in post)
                 {
-                    //revoving orphaned more tags (we've alreay expanded all mores during saving the whole page)
+                    //removing orphaned "more" blocks in the post body (we've already expanded all mores during saving the whole page)
                     foreach (var child in node.SelectNodes(".//a[contains(@name,'more')]") ?? Enumerable.Empty<HtmlNode>())
                     {
                         child.Remove();
                     }
-                    
+                    //same for the comments (extracting the span contents first - unlike the above, "more" block in comments are not expanded by "?oam" parameter)
+                    foreach (var child in node.SelectNodes(".//span[contains(@id,'more')]") ?? Enumerable.Empty<HtmlNode>())
+                    {
+                        node.InsertBefore(child.FirstChild, child);
+                        child.Remove();
+                    }
+
                     //removing html codes for fandom banners
                     foreach (var child in node.SelectNodes(".//textarea") ?? Enumerable.Empty<HtmlNode>())
                     {
                         child.Remove();
                     }
 
-                    //removing span block - they can also contain banners
-                    foreach (var child in node.SelectNodes(".//span") ?? Enumerable.Empty<HtmlNode>())
+                    //removing span blocks - they can also contain banners TODO: may be an overkill - check later for other fandoms
+                    foreach (var child in node.SelectNodes(".//span[@class='postInner']") ?? Enumerable.Empty<HtmlNode>())
                     {
                         child.Remove();
                     }
+
+                    //http://static.diary.ru/userdir/3/8/7/9/387924/81447654.png - "18+" icon
                 }
 
                 Directory.SetCurrentDirectory(Config.SaveFolder);
-                
-                using (StreamWriter storage = new StreamWriter(Path.Combine(Path.GetDirectoryName(file.FileName), string.Format("{0}.xml", postId))))
+
+                var currentPath = Path.GetDirectoryName(file.FileName);
+
+                using (StreamWriter storage = new StreamWriter(Path.Combine(currentPath, string.Format("{0}.xml", postId))))
                 {
                     foreach (var node in post)
                     {
+                        // Additional divs and tables are usually used for pretty formatting
+                        // - we don't need them at this stage because we don't preserve fandom-specific look for posts.
                         var innerHtml = RemoveUnwantedHtmlTags(node.InnerHtml, new List<string>() { "div", "table" });
                         var innerText = new StringBuilder(innerHtml).Replace("<br>", "\n\r").Replace("<b>Название", "**DIVIDER****HEADERSTART**<b>Название").Replace("<b>Цикл:</b>", "**DIVIDER****CYCLE**<b>Цикл:</b>");
                         var r = new Regex(@"[\n\r].*<b>Для голосования\s*([^\n\r]*)");
@@ -107,12 +129,60 @@ namespace FK_Downloader
                             innerText.Replace(match.Value, match.Value + "**HEADEREND**");
                         }
 
-                        var entries = innerText.ToString().Split(new[] { "**DIVIDER**" }, StringSplitOptions.RemoveEmptyEntries);
+                        var rawEntries = innerText.ToString().Split(new[] { "**DIVIDER**" }, StringSplitOptions.RemoveEmptyEntries);
 
-                        storage.WriteLine(innerText);
-#if DEBUG
-                        storage.WriteLine();
-#endif
+                        var strayImageURLs = new List<string>();
+
+                        bool isCycle = false;
+                        foreach (var rawEntry in rawEntries.Select(e => e.Split(new[] { "**HEADERSTART**" }, StringSplitOptions.RemoveEmptyEntries)))
+                        {
+                            foreach (var element in rawEntry.Select(e => e.TrimEnd(new[] { '\n', '\r' })))
+                            {
+                                var document = new HtmlDocument();
+                                document.LoadHtml(element);
+
+                                var currEntry = new Entry(file);
+
+                                var tmp = element.Split(new[] { "**HEADEREND**" }, StringSplitOptions.RemoveEmptyEntries);
+
+                                if (tmp.Length < 2) 
+                                {
+                                    var imgNode = document.DocumentNode.SelectSingleNode("//img");
+
+                                    if (imgNode != null)
+                                    {
+                                        document.DocumentNode.RemoveChild(imgNode);
+                                        var imgUrl = imgNode.GetAttributeValue("src", string.Empty);
+                                        if (!string.IsNullOrWhiteSpace(imgUrl))
+                                            strayImageURLs.Add(imgUrl);
+                                    }
+                                    if (!document.DocumentNode.ChildNodes.Any()) //meaning this is most likely a single image at the top of the post - anything else would have a header
+                                        continue;
+                                    //**CYCLE**
+                                    if (element.Contains("**CYCLE**"))
+                                    {
+                                        isCycle = true;
+                                    }
+
+                                }
+
+                                if (tmp.Length > 2)
+                                {
+                                    Console.WriteLine("Header parsing error in {0} - an entry cannot have two headers", file.FileName);
+                                    continue;
+                                }
+
+                                var entryHeader = tmp.First();
+                                var entryContent = tmp.Last();
+
+
+
+                                currEntry.ParseHeader(entryHeader);
+
+                                storage.WriteLine(element);
+                                storage.WriteLine("-------------------------------------");
+                            }
+                        }
                     }
                 }
             }
@@ -125,12 +195,12 @@ namespace FK_Downloader
                    from quest in level.Quests
                    from postFile in quest.PostURLs
                    select new FileWithProperties
-                       {
-                           FileName = postFile,
-                           Fandom = fandom.Name,
-                           Level = level.Name,
-                           Quest = quest.Name
-                       };
+                   {
+                       FileName = postFile,
+                       Fandom = fandom.Name,
+                       Level = level.Name,
+                       Quest = quest.Name
+                   };
         }
 
         private void ClearTrailingEnters(string sourcePath, string destinationPath)

@@ -82,18 +82,6 @@ namespace FK_Downloader
 #endif
                 FandomTree = CreateTagList(Driver, Config.FandomText).Select(fandom => new FandomStructure(fandom.Key, fandom.Value)).ToList();
 
-                /*
-                 * fandom Yuri Penguin Utena 2017
-                 * Shinsekai Yori
-                 * fandom Richard Armitage 2016
-                 * fandom RusLitClassic 2015
-                 * fandom Organizations 2015
-                 * fandom Dragonriders of Pern 2017
-                 * fandom K project 2015
-                 * fandom IT 2016
-                 */
-
-
 #if DEBUG
                 Console.WriteLine("{0}: Generating tag tree:", DateTime.Now.ToString("yyyy-MM-dd hh:mm:ss"));
 #endif
@@ -106,17 +94,11 @@ namespace FK_Downloader
                 }
 
 #if DEBUG
-                FandomTree = FandomTree.Where(f =>
-                                                f.Name.Contains("Yuri Penguin Utena")
-                                                || f.Name.Contains("Shinsekai Yori")
-                                                || f.Name.Contains("Richard Armitage")
-                                                || f.Name.Contains("RusLitClassic")
-                                                || f.Name.Contains("Organizations")
-                                                || f.Name.Contains("Dragonriders of Pern")
-                                                || f.Name.Contains("K project")
-                                                || f.Name.Contains(" IT ")
-                                                )
-                                                .ToList()
+                FandomTree = FandomTree
+                    .Where(f =>
+                            f.Name.Contains("Victorian")
+                          )
+                    .ToList()
                     ;
 #endif
                 return true;
@@ -311,7 +293,9 @@ namespace FK_Downloader
 
         public void Quit()
         {
-            Driver.Close();
+            // https://github.com/mozilla/geckodriver/issues/173
+            // - still an issue as of Firefox 52
+            //Driver.Close();
             Driver.Quit();
         }
 
